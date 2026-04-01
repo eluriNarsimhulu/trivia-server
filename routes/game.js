@@ -9,44 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const { getSession } = require('../store');
-const { startGame, submitAnswer, restartGame } = require('../game');
-
-
-// ---------------------------------------------------------------------------
-// POST /sessions/:id/lobby
-// Host moves game back to lobby after GAME_END
-// ---------------------------------------------------------------------------
-router.post('/:id/lobby', (req, res) => {
-  const { id: sessionId } = req.params;
-  const { host_id } = req.body;
-
-  if (!host_id) {
-    return res.status(400).json({ error: 'host_id is required.' });
-  }
-
-  const session = getSession(sessionId);
-  if (!session) {
-    return res.status(404).json({ error: 'Session not found.' });
-  }
-
-  if (session.hostId !== host_id) {
-    return res.status(403).json({ error: 'Only the host can go to lobby.' });
-  }
-
-  // 🔥 RESET GAME STATE
-  session.currentQuestionIndex = 0;
-  session.phase = 'lobby';
-
-  // Reset player states
-  for (const p of session.players) {
-    p.score = 0;
-    p.streak = 0;
-    p.hasAnswered = false;
-  }
-
-  return res.status(200).json({ status: 'lobby' });
-});
-
+const { startGame, submitAnswer, goToLobby, restartGameDirect } = require('../game');
 
 // ---------------------------------------------------------------------------
 // POST /sessions/:id/restart
@@ -72,12 +35,41 @@ router.post('/:id/restart', (req, res) => {
     return res.status(403).json({ error: 'Only the host can restart the game.' });
   }
 
-  const result = restartGame(sessionId);
+  const result = restartGameDirect(sessionId);
   if (!result.ok) {
     return res.status(409).json({ error: result.error });
   }
 
   return res.status(200).json({ status: 'restarted' });
+});
+
+// ---------------------------------------------------------------------------
+// POST /sessions/:id/lobby
+// Host sends everyone back to the lobby.
+// ---------------------------------------------------------------------------
+router.post('/:id/lobby', (req, res) => {
+  const { id: sessionId } = req.params;
+  const { host_id } = req.body;
+
+  if (!host_id) {
+    return res.status(400).json({ error: 'host_id is required.' });
+  }
+
+  const session = getSession(sessionId);
+  if (!session) {
+    return res.status(404).json({ error: 'Session not found.' });
+  }
+
+  if (session.hostId !== host_id) {
+    return res.status(403).json({ error: 'Only the host can perform this action.' });
+  }
+
+  const result = goToLobby(sessionId);
+  if (!result.ok) {
+    return res.status(409).json({ error: result.error });
+  }
+
+  return res.status(200).json({ status: 'returned_to_lobby' });
 });
 // ---------------------------------------------------------------------------
 // POST /sessions/:id/start

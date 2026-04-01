@@ -55,9 +55,15 @@ function startGame(sessionId) {
   if (session.players.size < 1) return { ok: false, error: 'No players in session.' };
 
   // Select a random subset of questions for this session.
-  // session.questions = _selectQuestions(QUESTIONS_PER_GAME);
-  session.questions = _selectQuestions(session.totalRounds);
+  session.questions = _selectQuestions(Math.min(session.totalRounds, QUESTIONS.length));
   session.phase = 'countdown';
+
+  // -- Bug #2 Fix: Ghost Session Cancellation --
+  // Game has started—the session is no longer a "ghost."
+  if (session.timers.startup) {
+    clearTimeout(session.timers.startup);
+    session.timers.startup = null;
+  }
 
   console.log(
     `[Game] Starting ${session.roomCode} with ` +
@@ -66,11 +72,7 @@ function startGame(sessionId) {
 
   // Broadcast GAME_START to all players simultaneously.
   // Flutter transitions: lobby → countdown on receiving this.
-  // broadcast(session, 'GAME_START', {
-  //   total_rounds:   session.questions.length,
-  //   question_count: session.questions.length,
-  //   scoring_rules:  SCORING_RULES,
-  // });
+
   broadcast(session, 'GAME_START', {
     total_rounds: session.totalRounds,
     question_count: session.questions.length,
@@ -532,11 +534,20 @@ function _clearTimer(session, name) {
 
 
 function _clearAllTimers(session) {
+  // Clear standard game loop timers.
+  _clearTimer(session, 'startup');
   _clearTimer(session, 'question');
   _clearTimer(session, 'answerCount');
   _clearTimer(session, 'result');
   _clearTimer(session, 'leaderboard');
   _clearTimer(session, 'cleanup');
+
+  // Clear any dynamic player disconnect timers (Bug #1).
+  for (const name in session.timers) {
+    if (name.startsWith('disconnect_')) {
+      _clearTimer(session, name);
+    }
+  }
 }
 
 /**
@@ -561,52 +572,92 @@ function _connectedPlayerCount(session) {
  * @param {string} sessionId
  * @returns {{ ok: boolean, error?: string }}
  */
-function restartGame(sessionId) {
+
+/**
+ * Resets the session back to lobby phase with the same players.
+ * Broadcasts GAME_RESTARTED so all Flutter clients return to lobby.
+ * SSE connections are kept alive — no reconnect needed.
+ */
+function goToLobby(sessionId) {
   const session = getSession(sessionId);
   if (!session) return { ok: false, error: 'Session not found.' };
 
-  // Only allow restart from ended state.
+  // Allow only from ended state.
   if (session.phase !== 'ended') {
     return { ok: false, error: 'Game has not ended yet.' };
   }
 
-  // Reset all timers.
+  // Clear all timers defensively.
   _clearAllTimers(session);
 
-  // Reset all game state — keep players and connections untouched.
+  // Reset session state back to lobby.
+  session.phase = 'lobby';
   session.questions = [];
   session.currentQuestionIndex = -1;
   session.questionStartTime = null;
   session.answers = new Map();
-  session.phase = 'lobby';
 
-
-  // Reset scores for all players — fresh game.
-  for (const [playerId] of session.players) {
+  // Reset all player scores but keep the players in the session.
+  for (const [playerId] of session.scores) {
     session.scores.set(playerId, { total: 0, streak: 0, lastRank: null });
   }
 
-  console.log(
-    `[Game] Session ${session.roomCode} restarted with ` +
-    `${session.players.size} player(s)`
-  );
+  console.log(`[Game] Sending session ${session.roomCode} back to lobby`);
 
-  // Broadcast GAME_RESTARTED to all connected clients.
-  // Flutter transitions all clients back to lobby phase on receiving this.
+  // Serialize current player list for the event payload.
+  const players = Array.from(session.players.values()).map(p => ({
+    id: p.id,
+    display_name: p.displayName,
+    is_host: p.isHost,
+    is_connected: p.isConnected,
+  }));
+
+  // Broadcast to ALL clients — Flutter transitions gameEnd → lobby.
   broadcast(session, 'GAME_RESTARTED', {
-    room_code: session.roomCode,
-    players: Array.from(session.players.values()).map(p => ({
-      id: p.id,
-      display_name: p.displayName,
-      is_host: p.isHost,
-      is_connected: p.isConnected,
-    })),
+    players,
   });
+
+  return { ok: true };
+
+}
+
+/**
+ * RESTARTS the game immediately, skipping the lobby.
+ * Resets scores, selects NEW questions, and broadcasts GAME_START.
+ */
+function restartGameDirect(sessionId) {
+  const session = getSession(sessionId);
+  if (!session) return { ok: false, error: 'Session not found.' };
+
+  if (session.phase !== 'ended') {
+    return { ok: false, error: 'Game has not ended yet.' };
+  }
+
+  _clearAllTimers(session);
+
+  // Select NEW set of questions for the restart.
+  session.questions = _selectQuestions(Math.min(session.totalRounds, QUESTIONS.length));
+  session.currentQuestionIndex = -1;
+  session.questionStartTime = null;
+  session.answers = new Map();
+
+  // Reset scores.
+  for (const [playerId] of session.scores) {
+    session.scores.set(playerId, { total: 0, streak: 0, lastRank: null });
+  }
+
+  session.phase = 'countdown';
+
+  // Synchronous restart for all clients.
+  broadcast(session, 'GAME_START', {
+    total_rounds: session.totalRounds,
+    question_count: session.questions.length,
+    scoring_rules: SCORING_RULES,
+  });
+
+  _scheduleQuestion(session, 0);
 
   return { ok: true };
 }
 
-// Add _clearAllTimers as a standalone helper (used by restartGame above):
-
-// Update exports:
-module.exports = { startGame, submitAnswer, restartGame };
+module.exports = { startGame, submitAnswer, goToLobby, restartGameDirect };
