@@ -9,15 +9,15 @@
 //   speed bonus:  up to 50 points — linear decay over question timer
 //   streak bonus: 10 points per consecutive correct answer (capped at 50)
 
-const BASE_POINTS         = 100;
-const MAX_SPEED_BONUS     = 50;
-const STREAK_BONUS_STEP   = 10;
-const MAX_STREAK_BONUS    = 50;
+const BASE_POINTS = 100;
+const MAX_SPEED_BONUS = 50;
+const STREAK_BONUS_STEP = 10;
+const MAX_STREAK_BONUS = 50;
 
 // Rules object sent to Flutter in GAME_START — must match ScoringRules.fromJson
 const SCORING_RULES = {
-  base_points:          BASE_POINTS,
-  max_speed_bonus:      MAX_SPEED_BONUS,
+  base_points: BASE_POINTS,
+  max_speed_bonus: MAX_SPEED_BONUS,
   streak_bonus_per_step: STREAK_BONUS_STEP,
 };
 
@@ -30,7 +30,7 @@ const SCORING_RULES = {
  * @returns {{ scoreDelta, speedBonus, streakBonus }}
  */
 function calculateScore(elapsedMs, timerSeconds, streak) {
-  const timerMs   = timerSeconds * 1000;
+  const timerMs = timerSeconds * 1000;
   const remaining = Math.max(0, timerMs - elapsedMs);
 
   // Speed bonus: full bonus if answered instantly, 0 if answered at the last ms.

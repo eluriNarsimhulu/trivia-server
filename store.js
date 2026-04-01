@@ -57,20 +57,20 @@ function createSession(sessionId, hostId, totalRounds) {
     sessionId,
     roomCode,
     hostId,
-    players:              new Map(),
-    connections:          new Map(),
-    questions:            [],
+    players: new Map(),
+    connections: new Map(),
+    questions: [],
     currentQuestionIndex: -1,
-    questionStartTime:    null,
-    scores:               new Map(),
-    answers:              new Map(),
-    phase:                'lobby',
+    questionStartTime: null,
+    scores: new Map(),
+    answers: new Map(),
+    phase: 'lobby',
     timers: {
-      question:    null,
+      question: null,
       answerCount: null,
-      result:      null,
+      result: null,
       leaderboard: null,
-      cleanup:     null,
+      cleanup: null,
     },
     totalRounds,
   };
@@ -117,11 +117,11 @@ function deleteSession(sessionId) {
  */
 function serializeSession(session) {
   return {
-    session_id:    session.sessionId,
-    room_code:     session.roomCode,
-    host_id:       session.hostId,
-    players:       Array.from(session.players.values()).map(serializePlayer),
-    total_rounds:  session.totalRounds,
+    session_id: session.sessionId,
+    room_code: session.roomCode,
+    host_id: session.hostId,
+    players: Array.from(session.players.values()).map(serializePlayer),
+    total_rounds: session.totalRounds,
     current_round: session.currentQuestionIndex + 1,
   };
 }
@@ -134,9 +134,9 @@ function serializeSession(session) {
  */
 function serializePlayer(player) {
   return {
-    id:           player.id,
+    id: player.id,
     display_name: player.displayName,
-    is_host:      player.isHost,
+    is_host: player.isHost,
     is_connected: player.isConnected,
   };
 }
@@ -194,4 +194,4 @@ module.exports = {
 //           │
 //           └── session.connections.get(playerId)
 //                     │
-//                     └── res.write(frame)   ← only this player...
+//                     └── res.write(frame)   ← only this player

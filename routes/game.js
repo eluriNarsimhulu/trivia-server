@@ -6,9 +6,9 @@
 
 'use strict';
 
-const express              = require('express');
-const router               = express.Router();
-const { getSession }       = require('../store');
+const express = require('express');
+const router = express.Router();
+const { getSession } = require('../store');
 const { startGame, submitAnswer, restartGame } = require('../game');
 
 // ---------------------------------------------------------------------------
@@ -20,7 +20,7 @@ const { startGame, submitAnswer, restartGame } = require('../game');
 // ---------------------------------------------------------------------------
 router.post('/:id/restart', (req, res) => {
   const { id: sessionId } = req.params;
-  const { host_id }       = req.body;
+  const { host_id } = req.body;
 
   if (!host_id) {
     return res.status(400).json({ error: 'host_id is required.' });
@@ -51,7 +51,7 @@ router.post('/:id/restart', (req, res) => {
 // ---------------------------------------------------------------------------
 router.post('/:id/start', (req, res) => {
   const { id: sessionId } = req.params;
-  const { host_id }       = req.body;
+  const { host_id } = req.body;
 
   if (!host_id) {
     return res.status(400).json({ error: 'host_id is required.' });
@@ -89,7 +89,7 @@ router.post('/:id/start', (req, res) => {
 // The server adds a second layer of both checks.
 // ---------------------------------------------------------------------------
 router.post('/:id/answers', (req, res) => {
-  const { id: sessionId }               = req.params;
+  const { id: sessionId } = req.params;
   const { question_id, player_id, answer } = req.body;
 
   if (!question_id || !player_id || !answer) {

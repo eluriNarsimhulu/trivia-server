@@ -98,7 +98,7 @@
 
 const QUESTIONS = [
 
-  
+
   {
     id: 'q1',
     type: 'mcq',
@@ -181,7 +181,7 @@ const QUESTIONS = [
   },
 
 
-    // Additional Telugu cinema questions
+  // Additional Telugu cinema questions
 
   {
     id: 'q11',

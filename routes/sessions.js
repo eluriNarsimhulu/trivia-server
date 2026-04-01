@@ -4,9 +4,9 @@
 //   POST /sessions      — host creates a new session
 //   POST /sessions/join — player joins by room code
 
-const express  = require('express');
+const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const router   = express.Router();
+const router = express.Router();
 
 const {
   createSession,
@@ -30,14 +30,14 @@ router.post('/', (req, res) => {
   }
 
   const sessionId = uuidv4();
-  const session   = createSession(sessionId, host_id, total_rounds);
+  const session = createSession(sessionId, host_id, total_rounds);
 
   // Add the host as the first player.
   session.players.set(host_id, {
-    id:           host_id,
-    displayName:  display_name,
-    isHost:       true,
-    isConnected:  true,
+    id: host_id,
+    displayName: display_name,
+    isHost: true,
+    isConnected: true,
   });
 
   // Initialise host score record.
@@ -47,7 +47,7 @@ router.post('/', (req, res) => {
 
   return res.status(201).json({
     session_id: sessionId,
-    room_code:  session.roomCode,
+    room_code: session.roomCode,
   });
 });
 
@@ -80,9 +80,9 @@ router.post('/join', (req, res) => {
   const isRejoining = session.players.has(player_id);
 
   session.players.set(player_id, {
-    id:          player_id,
+    id: player_id,
     displayName: display_name,
-    isHost:      false,
+    isHost: false,
     isConnected: true,
   });
 
@@ -94,7 +94,7 @@ router.post('/join', (req, res) => {
 
   return res.status(200).json({
     session_id: session.sessionId,
-    session:    serializeSession(session),
+    session: serializeSession(session),
   });
 });
 

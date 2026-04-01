@@ -17,17 +17,17 @@
 'use strict';
 
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 
 const { getSession, serializePlayer } = require('../store');
-const { broadcast, sendToPlayer }     = require('../broadcast');
+const { broadcast, sendToPlayer } = require('../broadcast');
 
 // ---------------------------------------------------------------------------
 // GET /sessions/:id/events?playerId=...
 // ---------------------------------------------------------------------------
 router.get('/:id/events', (req, res) => {
   const { id: sessionId } = req.params;
-  const { playerId }      = req.query;
+  const { playerId } = req.query;
 
   // -- Validate inputs --
   if (!playerId) {
@@ -51,9 +51,9 @@ router.get('/:id/events', (req, res) => {
   // These three headers are mandatory for a valid SSE stream.
   // no-cache prevents proxies from buffering events.
   // keep-alive tells the TCP layer to hold the connection open.
-  res.setHeader('Content-Type',  'text/event-stream');
+  res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection',    'keep-alive');
+  res.setHeader('Connection', 'keep-alive');
 
   // Flush headers immediately so the client knows the stream is open.
   // Without this, some HTTP clients buffer until the first write.

@@ -12,13 +12,13 @@
 'use strict';
 
 const express = require('express');
-const cors    = require('cors');
+const cors = require('cors');
 
 const sessionRoutes = require('./routes/sessions');
-const gameRoutes    = require('./routes/game');
-const eventRoutes   = require('./routes/events');
+const gameRoutes = require('./routes/game');
+const eventRoutes = require('./routes/events');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ---------------------------------------------------------------------------
@@ -68,15 +68,15 @@ process.on('SIGINT', () => {
     for (const res of session.connections.values()) {
       try {
         res.end();
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // Cancel any running game timers.
-    if (session.timers.question)    clearTimeout(session.timers.question);
+    if (session.timers.question) clearTimeout(session.timers.question);
     if (session.timers.answerCount) clearTimeout(session.timers.answerCount);
-    if (session.timers.result)      clearTimeout(session.timers.result);
+    if (session.timers.result) clearTimeout(session.timers.result);
     if (session.timers.leaderboard) clearTimeout(session.timers.leaderboard);
-    if (session.timers.cleanup)     clearTimeout(session.timers.cleanup);
+    if (session.timers.cleanup) clearTimeout(session.timers.cleanup);
   }
 
   console.log('[Server] Done. Goodbye.');

@@ -12,7 +12,7 @@
 //   data: {...json}\n
 //   \n
 //
-// The blank line at the end is mandatory — it signals end of frame to the client.
+// The blank line at the end is mandatory —  it signals end of frame to the client.
 
 'use strict';
 
@@ -84,3 +84,4 @@ function buildFrame(eventName, payload) {
 }
 
 module.exports = { broadcast, sendToPlayer, buildFrame };
+
