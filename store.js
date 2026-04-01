@@ -194,4 +194,4 @@ module.exports = {
 //           │
 //           └── session.connections.get(playerId)
 //                     │
-//                     └── res.write(frame)   ← only this player
+//                     └── res.write(frame)   ← only this player...
