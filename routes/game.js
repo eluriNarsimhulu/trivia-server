@@ -11,6 +11,43 @@ const router = express.Router();
 const { getSession } = require('../store');
 const { startGame, submitAnswer, restartGame } = require('../game');
 
+
+// ---------------------------------------------------------------------------
+// POST /sessions/:id/lobby
+// Host moves game back to lobby after GAME_END
+// ---------------------------------------------------------------------------
+router.post('/:id/lobby', (req, res) => {
+  const { id: sessionId } = req.params;
+  const { host_id } = req.body;
+
+  if (!host_id) {
+    return res.status(400).json({ error: 'host_id is required.' });
+  }
+
+  const session = getSession(sessionId);
+  if (!session) {
+    return res.status(404).json({ error: 'Session not found.' });
+  }
+
+  if (session.hostId !== host_id) {
+    return res.status(403).json({ error: 'Only the host can go to lobby.' });
+  }
+
+  // 🔥 RESET GAME STATE
+  session.currentQuestionIndex = 0;
+  session.phase = 'lobby';
+
+  // Reset player states
+  for (const p of session.players) {
+    p.score = 0;
+    p.streak = 0;
+    p.hasAnswered = false;
+  }
+
+  return res.status(200).json({ status: 'lobby' });
+});
+
+
 // ---------------------------------------------------------------------------
 // POST /sessions/:id/restart
 // Host restarts the game with the same players.
